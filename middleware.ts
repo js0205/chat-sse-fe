@@ -1,31 +1,29 @@
-import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { match } from '@formatjs/intl-localematcher';
+import Negotiator from 'negotiator';
 
-const supportedLanguages = ['en', 'zh']; // 支持的语言列表
+const locales = ['en', 'zh'];
+const defaultLocale = 'en';
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+function getLocale(request: Request) {
+  const headers = { 'accept-language': request.headers.get('accept-language') || '' };
+  const languages = new Negotiator({ headers }).languages();
+  return match(languages, locales, defaultLocale);
+}
 
-  // 如果访问根路径，重定向到默认语言
-  if (pathname === '/') {
-    const cookieStore = request.cookies;
-    const preferredLanguage = cookieStore.get('NEXT_LOCALE')?.value || 'en';
-    return NextResponse.redirect(new URL(`/${preferredLanguage}`, request.url));
-  }
-
-  // 如果路径中已经包含语言，直接继续
-  const pathnameHasLanguage = supportedLanguages.some(
-    (lang) => pathname.startsWith(`/${lang}/`) || pathname === `/${lang}`
+export function middleware(request: Request) {
+  const { pathname } = new URL(request.url);
+  const pathnameHasLocale = locales.some(
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
-  if (pathnameHasLanguage) {
-    return NextResponse.next();
-  }
 
-  // 重定向到默认语言路径
-  const preferredLanguage = request.cookies.get('NEXT_LOCALE')?.value || 'en';
-  return NextResponse.redirect(new URL(`/${preferredLanguage}${pathname}`, request.url));
+  if (pathnameHasLocale) return NextResponse.next();
+
+  const locale = getLocale(request);
+  const newUrl = new URL(`/${locale}${pathname}`, request.url);
+  return NextResponse.redirect(newUrl);
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)']
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

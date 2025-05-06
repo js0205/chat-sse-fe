@@ -1,10 +1,6 @@
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { useTranslation } from 'react-i18next';
 
-export default async function Home() {
-  const cookieStore = await cookies();
-  const preferredLanguage = cookieStore.get('NEXT_LOCALE')?.value || 'en';
-
-  // 重定向到默认语言路径
-  return NextResponse.redirect(new URL(`/${preferredLanguage}`, 'http://localhost:3000'));
+export default function Home() {
+  const { t } = useTranslation();
+  return <h1>{t('welcome')}</h1>;
 }

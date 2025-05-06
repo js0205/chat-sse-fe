@@ -1,10 +1,11 @@
 'use client';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChatBox } from '@/components/ChatBox/ChatBox';
 import { ModelBox } from '@/components/ModelBox/ModelBox';
 import { Button, Modal } from '@douyinfe/semi-ui';
-import { useState } from 'react';
-
 export default function ChatPage() {
+    const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const showDialog = () => {
     setVisible(true);
@@ -22,22 +23,22 @@ export default function ChatPage() {
   };
   return (
     <div>
-      <Button onClick={showDialog}>登录</Button>
+      <Button onClick={showDialog}>{t('login')}</Button>
       <Modal
-        title='基本对话框'
+        title={t('login')}
         visible={visible}
         onOk={handleOk}
         afterClose={handleAfterClose}
         onCancel={handleCancel}
         closeOnEsc={true}
       >
-        This is the content of a basic modal.
+        {t('This is the content of a basic modal.')}
         <br />
-        More content...
+        {t('More content...')}
       </Modal>
-      <h1>选择模型</h1>
+      <h1>{t('choose model')}</h1>
       <ModelBox />
-      <h1>Chat Page</h1>
+      <h1>{t('Chat Page')}</h1>
       <ChatBox />
     </div>
   );

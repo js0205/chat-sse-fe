@@ -2,7 +2,7 @@ import './globals.css';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <html lang="en">
+    <html lang='en'>
       <body>{children}</body>
     </html>
   );

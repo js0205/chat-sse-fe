@@ -1,11 +1,11 @@
 'use client';
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { ChatBox } from '@/components/ChatBox/ChatBox';
 import { ModelBox } from '@/components/ModelBox/ModelBox';
 import { Button, Modal } from '@douyinfe/semi-ui';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 export default function ChatPage() {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const showDialog = () => {
     setVisible(true);

@@ -10,17 +10,17 @@ i18n
   .init({
     resources: {
       en: {
-        translation: translationEN,
+        translation: translationEN
       },
       zh: {
-        translation: translationZH,
-      },
+        translation: translationZH
+      }
     },
     lng: 'en', // 默认语言
     fallbackLng: 'en', // 如果当前语言没有翻译，则使用默认语言
     interpolation: {
-      escapeValue: false, // React 已经处理了 XSS
-    },
+      escapeValue: false // React 已经处理了 XSS
+    }
   });
 
 export default i18n;

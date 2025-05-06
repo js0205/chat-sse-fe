@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
 import { match } from '@formatjs/intl-localematcher';
 import Negotiator from 'negotiator';
+import { NextResponse } from 'next/server';
 
 const locales = ['en', 'zh'];
 const defaultLocale = 'en';
@@ -13,9 +13,7 @@ function getLocale(request: Request) {
 
 export function middleware(request: Request) {
   const { pathname } = new URL(request.url);
-  const pathnameHasLocale = locales.some(
-    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
-  );
+  const pathnameHasLocale = locales.some((locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`);
 
   if (pathnameHasLocale) return NextResponse.next();
 
@@ -25,5 +23,5 @@ export function middleware(request: Request) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)']
 };

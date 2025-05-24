@@ -1,3 +1,4 @@
+'use client';
 import { deepseekMessage } from '@/app/api/chat';
 import { Button, Input } from '@douyinfe/semi-ui';
 import { useState } from 'react';

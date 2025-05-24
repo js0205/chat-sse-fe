@@ -1,3 +1,4 @@
+'use client';
 import { getModels } from '@/app/api/chat';
 import { useEffect, useState } from 'react';
 

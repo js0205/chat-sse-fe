@@ -1,5 +1,5 @@
 'use client';
-import { deepseekMessage } from '@/app/api/chat';
+import { deepseekMessage } from '@/apis';
 import { Button, TextArea } from '@douyinfe/semi-ui';
 import { useEffect, useRef, useState } from 'react';
 

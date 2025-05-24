@@ -1,7 +1,6 @@
 'use client';
-import { getModels } from '@/app/api/chat';
+import { getModels } from '@/apis';
 import { useEffect, useState } from 'react';
-
 export const ModelBox = () => {
   const [list, setList] = useState<Array<string>>([]);
   const fetchModels = async (): Promise<void> => {

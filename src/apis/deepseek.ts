@@ -17,7 +17,7 @@ const getModels = async (): Promise<IModelItem[]> => {
 };
 const deepseekMessage = async (userMessage: string) => {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/chat/completions`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_DEEPSEEK_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

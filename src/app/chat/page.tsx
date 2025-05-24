@@ -1,4 +1,4 @@
-import { ChatBox } from '@/components/ChatBox/ChatBox';
+import { ChatBoxFixed } from '@/components/ChatBox/ChatBoxFixed';
 import { LoginModal } from '@/components/LoginModal/LoginModal';
 import { ModelBox } from '@/components/ModelBox/ModelBox';
 
@@ -9,7 +9,7 @@ export default function ChatPage() {
       <h1>选择模型</h1>
       <ModelBox />
       <h1>Chat Page</h1>
-      <ChatBox />
+      <ChatBoxFixed />
     </div>
   );
 }

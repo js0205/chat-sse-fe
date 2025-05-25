@@ -1,7 +1,6 @@
 import { ChatBox } from '@/components/ChatBox/ChatBox';
 import { LoginModal } from '@/components/LoginModal/LoginModal';
 import { ModelBox } from '@/components/ModelBox/ModelBox';
-
 export default function ChatPage() {
   return (
     <div className='min-h-screen bg-gray-100 p-6'>

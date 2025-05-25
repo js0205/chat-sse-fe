@@ -3,22 +3,19 @@ import authAxios from '@/lib/axios/auth';
 const AUTH_API = '/api/v1/auth';
 
 interface LoginResponse {
-  token: string;
-  user: {
-    id: string;
-    username: string;
-    email?: string;
-    role?: string;
-  };
+  code: string;
+  data: LoginData;
+  msg: string;
 }
-interface RegisterRequest {
-  username: string;
-  password: string;
-  email?: string;
+
+interface LoginData {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
 }
 
 /** 登录表单数据 */
-interface LoginFormData {
+export interface LoginFormData {
   /** 用户名 */
   username: string;
   /** 密码 */
@@ -30,14 +27,25 @@ interface LoginFormData {
   /** 记住我 */
   rememberMe: boolean;
 }
+interface CaptchaData {
+  captchaBase64: string;
+  captchaKey: string;
+}
+
+interface CaptchaResponse {
+  code: string;
+  data: CaptchaData;
+  msg: string;
+}
+
 // 获取验证码
-const getCaptcha = async (): Promise<string> => {
-  const response: string = await authAxios.get(`${AUTH_API}/captcha`);
-  return response;
+const getCaptcha = async (): Promise<CaptchaData> => {
+  const response: CaptchaResponse = await authAxios.get(`${AUTH_API}/captcha`);
+  return response.data as CaptchaData;
 };
 
 // 用户登录
-const login = async (data: LoginFormData): Promise<LoginResponse> => {
+const login = async (data: LoginFormData): Promise<LoginData> => {
   try {
     const formData = new FormData();
     formData.append('username', data.username);
@@ -49,34 +57,11 @@ const login = async (data: LoginFormData): Promise<LoginResponse> => {
         'Content-Type': 'multipart/form-data'
       }
     });
-    return response;
+    return response.data as LoginData;
   } catch (error) {
     console.error('Login error:', error);
     throw error;
   }
 };
 
-// 用户注册
-const register = async (userData: RegisterRequest): Promise<LoginResponse> => {
-  try {
-    const response: LoginResponse = await authAxios.post(`${AUTH_API}/register`, userData);
-    return response;
-  } catch (error) {
-    console.error('Register error:', error);
-    throw error;
-  }
-};
-
-// 退出登录
-const logout = async (): Promise<void> => {
-  try {
-    await authAxios.post(`${AUTH_API}/logout`);
-    // 清除本地存储的token
-    localStorage.removeItem('authToken');
-  } catch (error) {
-    console.error('Logout error:', error);
-    throw error;
-  }
-};
-
-export { getCaptcha, login, logout, register };
+export { getCaptcha, login };

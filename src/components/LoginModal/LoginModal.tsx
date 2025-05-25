@@ -1,13 +1,7 @@
 'use client';
+import { getCaptcha, LoginFormData } from '@/apis';
 import { Button, Form, Modal, Toast } from '@douyinfe/semi-ui';
-import { useRef, useState } from 'react';
-
-interface LoginFormData {
-  username: string;
-  password: string;
-  captchaCode?: string;
-  rememberMe?: boolean;
-}
+import { useEffect, useRef, useState } from 'react';
 
 interface FormApi {
   reset: () => void;
@@ -15,17 +9,42 @@ interface FormApi {
   getValues: () => Record<string, unknown>;
   setValues: (values: Record<string, unknown>) => void;
 }
-
 export const LoginModal = () => {
   const [visible, setVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [captchaBase64, setCaptchaBase64] = useState('');
+  const [captchaBase64, setCaptchaBase64] = useState<string>('');
   const formRef = useRef<FormApi | null>(null);
+  // 安全的从localStorage加载初始值 - 避免SSR错误
+  const getInitialValues = () => {
+    // 确保在客户端环境才访问localStorage
+    if (typeof window === 'undefined') {
+      // 服务器端渲染时返回默认值
+      return {
+        username: '',
+        password: '',
+        captchaCode: '',
+        captchaKey: '',
+        rememberMe: false
+      };
+    }
+
+    // 客户端才访问localStorage
+    const rememberedUsername = localStorage.getItem('rememberedUsername') || '';
+    const isRemembered = localStorage.getItem('rememberMe') === 'true';
+
+    return {
+      username: rememberedUsername,
+      password: '',
+      captchaCode: '',
+      captchaKey: '',
+      rememberMe: isRemembered
+    };
+  };
+
+  const [initialValues, setInitialValues] = useState(getInitialValues());
 
   const showDialog = () => {
     setVisible(true);
   };
-
   const handleCancel = () => {
     setVisible(false);
     if (formRef.current) {
@@ -36,19 +55,20 @@ export const LoginModal = () => {
   const handleAfterClose = () => {
     console.log('After Close callback executed');
   };
-
   // 处理登录提交
   const handleLogin = async (values: LoginFormData) => {
-    setLoading(true);
     try {
-      console.log('登录数据:', values);
-
-      // 这里添加实际的登录逻辑
-      // const result = await loginApi(values);
-
-      // 模拟登录请求
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      // const { accessToken, refreshToken } = await login(values);
+      //TODO:将tokens保存到Redux store中
+      //TODO:获取用户信息
+      // 如果用户选择了记住我，保存用户名
+      if (values.rememberMe) {
+        localStorage.setItem('rememberedUsername', values.username);
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        localStorage.removeItem('rememberedUsername');
+        localStorage.removeItem('rememberMe');
+      }
       Toast.success('登录成功');
       setVisible(false);
       if (formRef.current) {
@@ -56,20 +76,32 @@ export const LoginModal = () => {
       }
     } catch (error) {
       console.error('登录失败:', error);
-      Toast.error('登录失败，请检查用户名和密码');
-    } finally {
-      setLoading(false);
+      Toast.error(typeof error === 'string' ? error : '登录失败，请检查用户名和密码');
+      // 登录失败后重新获取验证码
+      changeCaptcha();
+    }
+  };
+  /**
+   * 更新单个字段值
+   * @param field 字段名
+   * @param value 字段值
+   */
+  const updateSingleField = (field: keyof LoginFormData, value: unknown) => {
+    if (formRef.current) {
+      const currentValues = formRef.current.getValues();
+      formRef.current.setValues({
+        ...currentValues,
+        [field]: value
+      });
     }
   };
 
   // 获取验证码
-  const changeCaptcha = () => {
-    // 这里添加获取验证码的逻辑
-    console.log('刷新验证码');
-    // 模拟生成验证码图片
-    setCaptchaBase64(
-      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCA4MCAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjMyIiBmaWxsPSIjZjVmNWY1Ii8+Cjx0ZXh0IHg9IjQwIiB5PSIyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzMzMzMzMyI+MTIzNDwvdGV4dD4KPHN2Zz4K'
-    );
+  const changeCaptcha = async () => {
+    const res = await getCaptcha();
+    setCaptchaBase64(res.captchaBase64);
+    updateSingleField('captchaKey' as keyof LoginFormData, res.captchaKey);
+    setInitialValues((prev) => ({ ...prev, captchaKey: res.captchaKey }));
   };
 
   // 表单验证规则
@@ -84,11 +116,25 @@ export const LoginModal = () => {
     ]
   };
 
+  useEffect(() => {
+    changeCaptcha();
+
+    // 客户端挂载后更新初始值
+    if (typeof window !== 'undefined') {
+      const rememberedUsername = localStorage.getItem('rememberedUsername') || '';
+      const isRemembered = localStorage.getItem('rememberMe') === 'true';
+
+      setInitialValues((prev) => ({
+        ...prev,
+        username: rememberedUsername,
+        rememberMe: isRemembered
+      }));
+    }
+  }, []);
   return (
     <>
       <Button onClick={showDialog}>登录</Button>
       <Modal
-        title='用户登录'
         visible={visible}
         onCancel={handleCancel}
         afterClose={handleAfterClose}
@@ -103,12 +149,13 @@ export const LoginModal = () => {
               return formApi;
             }}
             onSubmit={handleLogin}
+            initValues={initialValues} // 绑定初始值
           >
             <div className='mb-4'>
               <Form.Input
                 field='username'
                 label='用户名'
-                placeholder='请输入用户名'
+                placeholder='请输入用户名（测试：admin）'
                 prefix={<span className='text-gray-400'>👤</span>}
                 rules={rules.username}
               />
@@ -118,7 +165,7 @@ export const LoginModal = () => {
               <Form.Input
                 field='password'
                 label='密码'
-                placeholder='请输入密码'
+                placeholder='请输入密码（测试：123456）'
                 prefix={<span className='text-gray-400'>🔒</span>}
                 type='password'
                 rules={rules.password}
@@ -148,7 +195,6 @@ export const LoginModal = () => {
                 }
               />
             </div>
-
             <div className='flex justify-between items-center mb-6'>
               <Form.Checkbox field='rememberMe'>记住我</Form.Checkbox>
               <a
@@ -164,8 +210,8 @@ export const LoginModal = () => {
             </div>
 
             <div className='space-y-4 w-full'>
-              <Button theme='solid' type='primary' htmlType='submit' loading={loading} block className='h-10'>
-                {loading ? '登录中...' : '登录'}
+              <Button theme='solid' type='primary' htmlType='submit' block className='h-10'>
+                登录
               </Button>
 
               <div className='text-center mt-4'>

@@ -3,53 +3,43 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 // ============== 类型定义 ==============
 
-interface User {
-  id: string;
-  username: string;
-  email?: string;
-  role?: string;
-}
-
-// 使用与auth.ts完全一致的LoginFormData类型
+// 定义登录表单数据接口，与API保持一致
 interface LoginFormData {
-  username: string;
-  password: string;
-  captchaKey: string;
-  captchaCode: string;
-  rememberMe: boolean; // 必需的boolean，与auth.ts保持一致
+  username: string;    // 用户名
+  password: string;    // 密码
+  captchaKey: string;  // 验证码key
+  captchaCode: string; // 验证码
+  rememberMe: boolean; // 是否记住我
 }
 
+// 定义认证状态接口
 interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-  accessToken: string | null;
-  refreshToken: string | null;
-  tokenExpiresAt: string | null; // token过期时间
+  isAuthenticated: boolean;    // 是否已认证
+  isLoading: boolean;          // 是否正在加载
+  error: string | null;        // 错误信息，null表示无错误
+  accessToken: string | null;  // 访问令牌
+  refreshToken: string | null; // 刷新令牌
 }
 
 // ============== 初始状态 ==============
 
+// 获取初始状态的函数，从localStorage恢复登录状态
 const getInitialState = (): AuthState => {
-  // 从 localStorage 恢复登录状态（如果有的话）
+  // 检查是否在浏览器环境中，避免SSR错误
   const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
   const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-  const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-  const tokenExpiresAt = typeof window !== 'undefined' ? localStorage.getItem('tokenExpiresAt') : null;
-  const user = userStr ? JSON.parse(userStr) : null;
 
+  // 返回初始状态
   return {
-    user,
-    isAuthenticated: !!accessToken && !!user,
-    isLoading: false,
-    error: null,
-    accessToken,
-    refreshToken,
-    tokenExpiresAt
+    isAuthenticated: !!accessToken,  // 有accessToken就算已认证
+    isLoading: false,                // 初始不在加载状态
+    error: null,                     // 初始无错误
+    accessToken,                     // 访问令牌
+    refreshToken,                    // 刷新令牌
   };
 };
 
+// 创建初始状态实例
 const initialState: AuthState = getInitialState();
 
 // ============== 工具函数 ==============
@@ -58,245 +48,155 @@ const initialState: AuthState = getInitialState();
  * 清除所有认证相关的localStorage数据
  */
 const clearAuthStorage = () => {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
-  localStorage.removeItem('tokenExpiresAt');
+  localStorage.removeItem('accessToken');   // 清除访问令牌
+  localStorage.removeItem('refreshToken');  // 清除刷新令牌
 };
 
 /**
  * 保存认证数据到localStorage
+ * @param accessToken 访问令牌
+ * @param refreshToken 刷新令牌
  */
-const saveAuthToStorage = (user: User, accessToken: string, refreshToken: string, expiresAt?: string) => {
-  localStorage.setItem('accessToken', accessToken);
-  localStorage.setItem('refreshToken', refreshToken);
-  localStorage.setItem('user', JSON.stringify(user));
-  if (expiresAt) {
-    localStorage.setItem('tokenExpiresAt', expiresAt);
-  }
+const saveAuthToStorage = (accessToken: string, refreshToken: string) => {
+  localStorage.setItem('accessToken', accessToken);      // 保存访问令牌
+  localStorage.setItem('refreshToken', refreshToken);    // 保存刷新令牌
 };
 
-// ============== 异步登录Action ==============
+// ============== 异步操作 ==============
 
 /**
- * 用户登录
+ * 用户登录异步操作
  */
-export const loginUser = createAsyncThunk('auth/login', async (loginData: LoginFormData, { rejectWithValue }) => {
-  try {
-    const response = await loginAPI(loginData);
+export const loginUser = createAsyncThunk(
+  '/api/v1/auth/login',  // action类型字符串
+  async (loginData: LoginFormData, { rejectWithValue }) => {
+    try {
+      // 调用登录API，获取tokens
+      const response = await loginAPI(loginData);
 
-    // 计算token过期时间（假设accessToken有效期为24小时）
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      // 保存认证数据到localStorage
+      saveAuthToStorage(response.accessToken, response.refreshToken);
 
-    // 存储到 localStorage
-    saveAuthToStorage(response.user, response.token, response.token, expiresAt);
+      // 如果用户选择了记住我，保存用户名
+      if (loginData.rememberMe) {
+        localStorage.setItem('rememberedUsername', loginData.username); // 保存用户名
+        localStorage.setItem('rememberMe', 'true');                     // 保存记住我状态
+      } else {
+        localStorage.removeItem('rememberedUsername'); // 清除保存的用户名
+        localStorage.removeItem('rememberMe');         // 清除记住我状态
+      }
 
-    // 如果用户选择了记住我，保存用户名
-    if (loginData.rememberMe) {
-      localStorage.setItem('rememberedUsername', loginData.username);
-      localStorage.setItem('rememberMe', 'true');
-    } else {
-      localStorage.removeItem('rememberedUsername');
-      localStorage.removeItem('rememberMe');
+      // 返回登录成功的数据
+      return {
+        accessToken: response.accessToken,   // 访问令牌
+        refreshToken: response.refreshToken, // 刷新令牌
+      };
+    } catch (error: Error | unknown) {
+      // 登录失败时清除可能存在的无效token
+      clearAuthStorage();
+      // 提取错误信息
+      const errorMessage = (error as Error)?.message || '登录失败';
+      // 返回错误信息
+      return rejectWithValue(errorMessage);
     }
-
-    return {
-      user: response.user,
-      accessToken: response.token, // 假设API返回的token就是accessToken
-      refreshToken: response.token, // 如果API有单独的refreshToken，请修改这里
-      tokenExpiresAt: expiresAt,
-      loginTime: new Date().toISOString()
-    };
-  } catch (error: Error | unknown) {
-    // 清除可能存在的无效 token
-    clearAuthStorage();
-    const errorMessage = (error as Error)?.message || '登录失败';
-    return rejectWithValue(errorMessage);
   }
-});
-
-/**
- * 刷新Token
- */
-export const refreshToken = createAsyncThunk('auth/refreshToken', async (_, { getState, rejectWithValue }) => {
-  try {
-    const state = getState() as { auth: AuthState };
-    const currentRefreshToken = state.auth.refreshToken;
-
-    if (!currentRefreshToken) {
-      throw new Error('没有可用的refresh token');
-    }
-
-    // 这里调用刷新token的API
-    // const response = await refreshTokenAPI(currentRefreshToken);
-
-    // 暂时模拟返回新的tokens（实际项目中需要调用真实API）
-    const newAccessToken = 'new_access_token_' + Date.now();
-    const newRefreshToken = 'new_refresh_token_' + Date.now();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-    // 更新localStorage
-    if (state.auth.user) {
-      saveAuthToStorage(state.auth.user, newAccessToken, newRefreshToken, expiresAt);
-    }
-
-    return {
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-      tokenExpiresAt: expiresAt
-    };
-  } catch (error: unknown) {
-    // 刷新失败，清除所有认证信息
-    clearAuthStorage();
-    const errorMessage = (error as Error)?.message || 'Token刷新失败';
-    return rejectWithValue(errorMessage);
-  }
-});
+);
 
 // ============== Slice ==============
 
+// 创建认证slice
 const authSlice = createSlice({
-  name: 'auth',
-  initialState,
+  name: 'auth',     // slice名称
+  initialState,     // 初始状态
+  // 同步reducers
   reducers: {
-    // 清除错误信息
+    // 清除错误信息的reducer
     clearError: (state) => {
-      state.error = null;
+      state.error = null; // 将错误状态重置为null
     },
 
-    // 登出（同步action）
+    // 登出的reducer
     logout: (state) => {
-      state.user = null;
-      state.accessToken = null;
-      state.refreshToken = null;
-      state.tokenExpiresAt = null;
-      state.isAuthenticated = false;
-      state.error = null;
+      state.accessToken = null;       // 清除访问令牌
+      state.refreshToken = null;      // 清除刷新令牌
+      state.isAuthenticated = false;  // 设置为未认证状态
+      state.error = null;             // 清除错误信息
 
-      // 清除 localStorage
+      // 清除localStorage中的认证数据
       clearAuthStorage();
     },
 
-    // 更新用户信息
-    updateUser: (state, action: PayloadAction<Partial<User>>) => {
-      if (state.user) {
-        state.user = { ...state.user, ...action.payload };
-        localStorage.setItem('user', JSON.stringify(state.user));
-      }
+    // 手动设置tokens的reducer（用于token刷新等场景）
+    setTokens: (state, action: PayloadAction<{ accessToken: string; refreshToken: string }>) => {
+      state.accessToken = action.payload.accessToken;   // 更新访问令牌
+      state.refreshToken = action.payload.refreshToken; // 更新刷新令牌
+      state.isAuthenticated = true;                      // 设置为已认证状态
+
+      // 同步更新localStorage
+      saveAuthToStorage(
+        action.payload.accessToken,
+        action.payload.refreshToken
+      );
     },
-
-    // 手动设置tokens（用于token刷新）
-    setTokens: (state, action: PayloadAction<{ accessToken: string; refreshToken: string; expiresAt?: string }>) => {
-      state.accessToken = action.payload.accessToken;
-      state.refreshToken = action.payload.refreshToken;
-      if (action.payload.expiresAt) {
-        state.tokenExpiresAt = action.payload.expiresAt;
-      }
-
-      // 更新localStorage
-      if (state.user) {
-        saveAuthToStorage(
-          state.user,
-          action.payload.accessToken,
-          action.payload.refreshToken,
-          action.payload.expiresAt
-        );
-      }
-    },
-
-    // 检查token是否过期
-    checkTokenExpiry: (state) => {
-      if (state.tokenExpiresAt) {
-        const now = new Date();
-        const expiryTime = new Date(state.tokenExpiresAt);
-
-        if (now >= expiryTime) {
-          // Token已过期，清除认证状态
-          state.user = null;
-          state.accessToken = null;
-          state.refreshToken = null;
-          state.tokenExpiresAt = null;
-          state.isAuthenticated = false;
-          clearAuthStorage();
-        }
-      }
-    }
   },
+  // 处理异步操作的extraReducers
   extraReducers: (builder) => {
-    // ========== 登录处理 ==========
+    // 处理登录异步操作
     builder
+      // 处理登录pending状态（请求开始）
       .addCase(loginUser.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
+        state.isLoading = true;  // 设置加载状态
+        state.error = null;      // 清除之前的错误
       })
+      // 处理登录fulfilled状态（请求成功）
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.user = action.payload.user;
-        state.accessToken = action.payload.accessToken;
-        state.refreshToken = action.payload.refreshToken;
-        state.tokenExpiresAt = action.payload.tokenExpiresAt;
-        state.isAuthenticated = true;
-        state.error = null;
+        state.isLoading = false;                           // 取消加载状态
+        state.accessToken = action.payload.accessToken;   // 设置访问令牌
+        state.refreshToken = action.payload.refreshToken; // 设置刷新令牌
+        state.isAuthenticated = true;                      // 设置为已认证状态
+        state.error = null;                                // 清除错误信息
       })
+      // 处理登录rejected状态（请求失败）
       .addCase(loginUser.rejected, (state, action) => {
-        state.isLoading = false;
-        state.user = null;
-        state.accessToken = null;
-        state.refreshToken = null;
-        state.tokenExpiresAt = null;
-        state.isAuthenticated = false;
-        state.error = action.payload as string;
-      })
-
-      // ========== 刷新Token处理 ==========
-      .addCase(refreshToken.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(refreshToken.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.accessToken = action.payload.accessToken;
-        state.refreshToken = action.payload.refreshToken;
-        state.tokenExpiresAt = action.payload.tokenExpiresAt;
-        state.error = null;
-      })
-      .addCase(refreshToken.rejected, (state, action) => {
-        state.isLoading = false;
-        // 刷新失败，清除所有认证信息
-        state.user = null;
-        state.accessToken = null;
-        state.refreshToken = null;
-        state.tokenExpiresAt = null;
-        state.isAuthenticated = false;
-        state.error = action.payload as string;
+        state.isLoading = false;        // 取消加载状态
+        state.accessToken = null;       // 清除访问令牌
+        state.refreshToken = null;      // 清除刷新令牌
+        state.isAuthenticated = false;  // 设置为未认证状态
+        state.error = action.payload as string; // 设置错误信息
       });
   }
 });
 
-// ============== 导出 ==============
+// ============== 导出Actions ==============
 
-export const { clearError, logout, updateUser, setTokens, checkTokenExpiry } = authSlice.actions;
+// 导出所有action creators
+export const {
+  clearError,  // 清除错误
+  logout,      // 登出
+  setTokens,   // 设置tokens
+} = authSlice.actions;
 
+// 导出reducer作为默认导出
 export default authSlice.reducer;
 
 // ============== 选择器 ==============
 
-export const selectAuth = (state: { auth: AuthState }) => state.auth;
-export const selectUser = (state: { auth: AuthState }) => state.auth.user;
-export const selectIsAuthenticated = (state: { auth: AuthState }) => state.auth.isAuthenticated;
-export const selectIsLoading = (state: { auth: AuthState }) => state.auth.isLoading;
-export const selectAuthError = (state: { auth: AuthState }) => state.auth.error;
-export const selectAccessToken = (state: { auth: AuthState }) => state.auth.accessToken;
-export const selectRefreshToken = (state: { auth: AuthState }) => state.auth.refreshToken;
-export const selectTokenExpiresAt = (state: { auth: AuthState }) => state.auth.tokenExpiresAt;
-
-// 判断token是否即将过期（5分钟内）
-export const selectIsTokenNearExpiry = (state: { auth: AuthState }) => {
-  const { tokenExpiresAt } = state.auth;
-  if (!tokenExpiresAt) return false;
-
-  const now = new Date();
-  const expiryTime = new Date(tokenExpiresAt);
-  const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
-
-  return expiryTime <= fiveMinutesFromNow;
+// 导入RootState类型（避免循环依赖）
+type RootState = {
+  auth: AuthState;
 };
+
+// 基础选择器函数
+
+// 选择整个auth状态
+export const selectAuth = (state: RootState) => state.auth;
+// 选择是否已认证
+export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
+// 选择加载状态
+export const selectIsLoading = (state: RootState) => state.auth.isLoading;
+// 选择错误信息
+export const selectAuthError = (state: RootState) => state.auth.error;
+// 选择访问令牌
+export const selectAccessToken = (state: RootState) => state.auth.accessToken;
+// 选择刷新令牌
+export const selectRefreshToken = (state: RootState) => state.auth.refreshToken;

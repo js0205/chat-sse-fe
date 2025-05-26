@@ -1,8 +1,10 @@
 'use client';
 import { getCaptcha, LoginFormData } from '@/apis';
+import { RootState } from '@/store';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Button, Form, Modal, Toast } from '@douyinfe/semi-ui';
 import { useEffect, useRef, useState } from 'react';
-
+import { loginUser } from '@/store/slices/authSlice';
 interface FormApi {
   reset: () => void;
   validate: () => Promise<Record<string, unknown>>;
@@ -13,6 +15,8 @@ export const LoginModal = () => {
   const [visible, setVisible] = useState(false);
   const [captchaBase64, setCaptchaBase64] = useState<string>('');
   const formRef = useRef<FormApi | null>(null);
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+  const dispatch = useAppDispatch();
   // 安全的从localStorage加载初始值 - 避免SSR错误
   const getInitialValues = () => {
     // 确保在客户端环境才访问localStorage
@@ -58,21 +62,13 @@ export const LoginModal = () => {
   // 处理登录提交
   const handleLogin = async (values: LoginFormData) => {
     try {
-      // const { accessToken, refreshToken } = await login(values);
-      //TODO:将tokens保存到Redux store中
-      //TODO:获取用户信息
-      // 如果用户选择了记住我，保存用户名
-      if (values.rememberMe) {
-        localStorage.setItem('rememberedUsername', values.username);
-        localStorage.setItem('rememberMe', 'true');
-      } else {
-        localStorage.removeItem('rememberedUsername');
-        localStorage.removeItem('rememberMe');
-      }
-      Toast.success('登录成功');
-      setVisible(false);
-      if (formRef.current) {
-        formRef.current.reset();
+      const result = await dispatch(loginUser(values));
+      if(loginUser.fulfilled.match(result)){
+        Toast.success('登录成功');
+        setVisible(false);
+        if (formRef.current) {
+          formRef.current.reset();
+        }
       }
     } catch (error) {
       console.error('登录失败:', error);
@@ -80,6 +76,10 @@ export const LoginModal = () => {
       // 登录失败后重新获取验证码
       changeCaptcha();
     }
+  };
+
+  const logout = () => {
+    console.log('gb123logout');
   };
   /**
    * 更新单个字段值
@@ -108,11 +108,11 @@ export const LoginModal = () => {
   const rules = {
     username: [
       { required: true, message: '请输入用户名' },
-      { min: 3, message: '用户名至少3个字符' }
+      { min: 1, message: '用户名至少1个字符' }
     ],
     password: [
       { required: true, message: '请输入密码' },
-      { min: 6, message: '密码至少6个字符' }
+      { min: 1, message: '密码至少1个字符' }
     ]
   };
 
@@ -133,7 +133,10 @@ export const LoginModal = () => {
   }, []);
   return (
     <>
-      <Button onClick={showDialog}>登录</Button>
+      {accessToken ?
+       <Button onClick={showDialog}>登录</Button> :
+       <Button onClick={logout}>退出登录</Button>
+      }
       <Modal
         visible={visible}
         onCancel={handleCancel}

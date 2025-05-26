@@ -1,6 +1,5 @@
-import { ReduxProvider } from '../store/Provider';
+import ReduxProvider from '@/store/Provider';
 import './globals.css';
-
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang='en'>

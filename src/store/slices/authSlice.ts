@@ -5,19 +5,19 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 // 定义登录表单数据接口，与API保持一致
 interface LoginFormData {
-  username: string;    // 用户名
-  password: string;    // 密码
-  captchaKey: string;  // 验证码key
+  username: string; // 用户名
+  password: string; // 密码
+  captchaKey: string; // 验证码key
   captchaCode: string; // 验证码
   rememberMe: boolean; // 是否记住我
 }
 
 // 定义认证状态接口
 interface AuthState {
-  isAuthenticated: boolean;    // 是否已认证
-  isLoading: boolean;          // 是否正在加载
-  error: string | null;        // 错误信息，null表示无错误
-  accessToken: string | null;  // 访问令牌
+  isAuthenticated: boolean; // 是否已认证
+  isLoading: boolean; // 是否正在加载
+  error: string | null; // 错误信息，null表示无错误
+  accessToken: string | null; // 访问令牌
   refreshToken: string | null; // 刷新令牌
 }
 
@@ -31,11 +31,11 @@ const getInitialState = (): AuthState => {
 
   // 返回初始状态
   return {
-    isAuthenticated: !!accessToken,  // 有accessToken就算已认证
-    isLoading: false,                // 初始不在加载状态
-    error: null,                     // 初始无错误
-    accessToken,                     // 访问令牌
-    refreshToken,                    // 刷新令牌
+    isAuthenticated: !!accessToken, // 有accessToken就算已认证
+    isLoading: false, // 初始不在加载状态
+    error: null, // 初始无错误
+    accessToken, // 访问令牌
+    refreshToken // 刷新令牌
   };
 };
 
@@ -48,8 +48,8 @@ const initialState: AuthState = getInitialState();
  * 清除所有认证相关的localStorage数据
  */
 const clearAuthStorage = () => {
-  localStorage.removeItem('accessToken');   // 清除访问令牌
-  localStorage.removeItem('refreshToken');  // 清除刷新令牌
+  localStorage.removeItem('accessToken'); // 清除访问令牌
+  localStorage.removeItem('refreshToken'); // 清除刷新令牌
 };
 
 /**
@@ -58,8 +58,8 @@ const clearAuthStorage = () => {
  * @param refreshToken 刷新令牌
  */
 const saveAuthToStorage = (accessToken: string, refreshToken: string) => {
-  localStorage.setItem('accessToken', accessToken);      // 保存访问令牌
-  localStorage.setItem('refreshToken', refreshToken);    // 保存刷新令牌
+  localStorage.setItem('accessToken', accessToken); // 保存访问令牌
+  localStorage.setItem('refreshToken', refreshToken); // 保存刷新令牌
 };
 
 // ============== 异步操作 ==============
@@ -68,7 +68,7 @@ const saveAuthToStorage = (accessToken: string, refreshToken: string) => {
  * 用户登录异步操作
  */
 export const loginUser = createAsyncThunk(
-  '/api/v1/auth/login',  // action类型字符串
+  '/api/v1/auth/login', // action类型字符串
   async (loginData: LoginFormData, { rejectWithValue }) => {
     try {
       // 调用登录API，获取tokens
@@ -80,16 +80,16 @@ export const loginUser = createAsyncThunk(
       // 如果用户选择了记住我，保存用户名
       if (loginData.rememberMe) {
         localStorage.setItem('rememberedUsername', loginData.username); // 保存用户名
-        localStorage.setItem('rememberMe', 'true');                     // 保存记住我状态
+        localStorage.setItem('rememberMe', 'true'); // 保存记住我状态
       } else {
         localStorage.removeItem('rememberedUsername'); // 清除保存的用户名
-        localStorage.removeItem('rememberMe');         // 清除记住我状态
+        localStorage.removeItem('rememberMe'); // 清除记住我状态
       }
 
       // 返回登录成功的数据
       return {
-        accessToken: response.accessToken,   // 访问令牌
-        refreshToken: response.refreshToken, // 刷新令牌
+        accessToken: response.accessToken, // 访问令牌
+        refreshToken: response.refreshToken // 刷新令牌
       };
     } catch (error: Error | unknown) {
       // 登录失败时清除可能存在的无效token
@@ -106,8 +106,8 @@ export const loginUser = createAsyncThunk(
 
 // 创建认证slice
 const authSlice = createSlice({
-  name: 'auth',     // slice名称
-  initialState,     // 初始状态
+  name: 'auth', // slice名称
+  initialState, // 初始状态
   // 同步reducers
   reducers: {
     // 清除错误信息的reducer
@@ -117,10 +117,10 @@ const authSlice = createSlice({
 
     // 登出的reducer
     logout: (state) => {
-      state.accessToken = null;       // 清除访问令牌
-      state.refreshToken = null;      // 清除刷新令牌
-      state.isAuthenticated = false;  // 设置为未认证状态
-      state.error = null;             // 清除错误信息
+      state.accessToken = null; // 清除访问令牌
+      state.refreshToken = null; // 清除刷新令牌
+      state.isAuthenticated = false; // 设置为未认证状态
+      state.error = null; // 清除错误信息
 
       // 清除localStorage中的认证数据
       clearAuthStorage();
@@ -128,16 +128,13 @@ const authSlice = createSlice({
 
     // 手动设置tokens的reducer（用于token刷新等场景）
     setTokens: (state, action: PayloadAction<{ accessToken: string; refreshToken: string }>) => {
-      state.accessToken = action.payload.accessToken;   // 更新访问令牌
+      state.accessToken = action.payload.accessToken; // 更新访问令牌
       state.refreshToken = action.payload.refreshToken; // 更新刷新令牌
-      state.isAuthenticated = true;                      // 设置为已认证状态
+      state.isAuthenticated = true; // 设置为已认证状态
 
       // 同步更新localStorage
-      saveAuthToStorage(
-        action.payload.accessToken,
-        action.payload.refreshToken
-      );
-    },
+      saveAuthToStorage(action.payload.accessToken, action.payload.refreshToken);
+    }
   },
   // 处理异步操作的extraReducers
   extraReducers: (builder) => {
@@ -145,23 +142,23 @@ const authSlice = createSlice({
     builder
       // 处理登录pending状态（请求开始）
       .addCase(loginUser.pending, (state) => {
-        state.isLoading = true;  // 设置加载状态
-        state.error = null;      // 清除之前的错误
+        state.isLoading = true; // 设置加载状态
+        state.error = null; // 清除之前的错误
       })
       // 处理登录fulfilled状态（请求成功）
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.isLoading = false;                           // 取消加载状态
-        state.accessToken = action.payload.accessToken;   // 设置访问令牌
+        state.isLoading = false; // 取消加载状态
+        state.accessToken = action.payload.accessToken; // 设置访问令牌
         state.refreshToken = action.payload.refreshToken; // 设置刷新令牌
-        state.isAuthenticated = true;                      // 设置为已认证状态
-        state.error = null;                                // 清除错误信息
+        state.isAuthenticated = true; // 设置为已认证状态
+        state.error = null; // 清除错误信息
       })
       // 处理登录rejected状态（请求失败）
       .addCase(loginUser.rejected, (state, action) => {
-        state.isLoading = false;        // 取消加载状态
-        state.accessToken = null;       // 清除访问令牌
-        state.refreshToken = null;      // 清除刷新令牌
-        state.isAuthenticated = false;  // 设置为未认证状态
+        state.isLoading = false; // 取消加载状态
+        state.accessToken = null; // 清除访问令牌
+        state.refreshToken = null; // 清除刷新令牌
+        state.isAuthenticated = false; // 设置为未认证状态
         state.error = action.payload as string; // 设置错误信息
       });
   }
@@ -171,9 +168,9 @@ const authSlice = createSlice({
 
 // 导出所有action creators
 export const {
-  clearError,  // 清除错误
-  logout,      // 登出
-  setTokens,   // 设置tokens
+  clearError, // 清除错误
+  logout, // 登出
+  setTokens // 设置tokens
 } = authSlice.actions;
 
 // 导出reducer作为默认导出

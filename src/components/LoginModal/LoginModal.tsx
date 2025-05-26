@@ -2,9 +2,9 @@
 import { getCaptcha, LoginFormData } from '@/apis';
 import { RootState } from '@/store';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { loginUser } from '@/store/slices/authSlice';
 import { Button, Form, Modal, Toast } from '@douyinfe/semi-ui';
 import { useEffect, useRef, useState } from 'react';
-import { loginUser } from '@/store/slices/authSlice';
 interface FormApi {
   reset: () => void;
   validate: () => Promise<Record<string, unknown>>;
@@ -63,7 +63,7 @@ export const LoginModal = () => {
   const handleLogin = async (values: LoginFormData) => {
     try {
       const result = await dispatch(loginUser(values));
-      if(loginUser.fulfilled.match(result)){
+      if (loginUser.fulfilled.match(result)) {
         Toast.success('登录成功');
         setVisible(false);
         if (formRef.current) {
@@ -133,10 +133,7 @@ export const LoginModal = () => {
   }, []);
   return (
     <>
-      {accessToken ?
-       <Button onClick={showDialog}>登录</Button> :
-       <Button onClick={logout}>退出登录</Button>
-      }
+      {accessToken ? <Button onClick={showDialog}>登录</Button> : <Button onClick={logout}>退出登录</Button>}
       <Modal
         visible={visible}
         onCancel={handleCancel}

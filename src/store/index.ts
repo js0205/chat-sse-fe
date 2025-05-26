@@ -8,7 +8,7 @@ export const store = configureStore({
   // 配置根reducer，将各个slice组合起来
   reducer: {
     // 认证状态管理
-    auth: authSlice,
+    auth: authSlice
   },
   // 配置中间件
   middleware: (getDefaultMiddleware) =>
@@ -19,16 +19,16 @@ export const store = configureStore({
         // 忽略这些action的序列化检查（通常用于redux-persist）
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
         // 忽略这些字段的序列化检查
-        ignoredPaths: ['auth.tokenExpiresAt'],
+        ignoredPaths: ['auth.tokenExpiresAt']
       },
       // 开启不可变性检查（开发环境）
       immutableCheck: {
         // 设置警告阈值，超过128ms的操作会发出警告
-        warnAfter: 128,
-      },
+        warnAfter: 128
+      }
     }),
   // 开发工具配置，只在非生产环境启用Redux DevTools
-  devTools: process.env.NODE_ENV !== 'production',
+  devTools: process.env.NODE_ENV !== 'production'
 });
 
 // 导出RootState类型，用于TypeScript类型推断

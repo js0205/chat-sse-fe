@@ -1,8 +1,7 @@
-import { login as loginAPI } from '@/apis/auth';
+import { login as loginAPI, logout as logoutAPI } from '@/apis/auth';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 // ============== 类型定义 ==============
-
 // 定义登录表单数据接口，与API保持一致
 interface LoginFormData {
   username: string; // 用户名
@@ -80,9 +79,11 @@ export const loginUser = createAsyncThunk(
       // 如果用户选择了记住我，保存用户名
       if (loginData.rememberMe) {
         localStorage.setItem('rememberedUsername', loginData.username); // 保存用户名
+        localStorage.setItem('rememberedPassword', loginData.password); // 保存密码
         localStorage.setItem('rememberMe', 'true'); // 保存记住我状态
       } else {
         localStorage.removeItem('rememberedUsername'); // 清除保存的用户名
+        localStorage.removeItem('rememberedPassword'); // 清除保存的密码
         localStorage.removeItem('rememberMe'); // 清除记住我状态
       }
 
@@ -101,6 +102,16 @@ export const loginUser = createAsyncThunk(
     }
   }
 );
+
+export const logoutUser = createAsyncThunk('/api/v1/auth/logout', async (_, { rejectWithValue }) => {
+  try {
+    await logoutAPI();
+    clearAuthStorage();
+  } catch (error: Error | unknown) {
+    const errorMessage = (error as Error)?.message || '登出失败';
+    return rejectWithValue(errorMessage);
+  }
+});
 
 // ============== Slice ==============
 

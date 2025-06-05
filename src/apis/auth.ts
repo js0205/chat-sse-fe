@@ -8,6 +8,12 @@ interface LoginResponse {
   msg: string;
 }
 
+interface LogoutResponse {
+  code: string;
+  data: null;
+  msg: string;
+}
+
 interface LoginData {
   accessToken: string;
   refreshToken: string;
@@ -63,5 +69,8 @@ const login = async (data: LoginFormData): Promise<LoginData> => {
     throw error;
   }
 };
-
-export { getCaptcha, login };
+const logout = async (): Promise<null> => {
+  const response: LogoutResponse = await authAxios.delete(`${AUTH_API}/logout`);
+  return response.data as null;
+};
+export { getCaptcha, login, logout };

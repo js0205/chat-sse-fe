@@ -33,11 +33,12 @@ export const LoginModal = () => {
 
     // 客户端才访问localStorage
     const rememberedUsername = localStorage.getItem('rememberedUsername') || '';
+    const rememberedPassword = localStorage.getItem('rememberedPassword') || '';
     const isRemembered = localStorage.getItem('rememberMe') === 'true';
 
     return {
       username: rememberedUsername,
-      password: '',
+      password: rememberedPassword,
       captchaCode: '',
       captchaKey: '',
       rememberMe: isRemembered
@@ -122,11 +123,13 @@ export const LoginModal = () => {
     // 客户端挂载后更新初始值
     if (typeof window !== 'undefined') {
       const rememberedUsername = localStorage.getItem('rememberedUsername') || '';
+      const rememberedPassword = localStorage.getItem('rememberedPassword') || '';
       const isRemembered = localStorage.getItem('rememberMe') === 'true';
 
       setInitialValues((prev) => ({
         ...prev,
         username: rememberedUsername,
+        password: rememberedPassword,
         rememberMe: isRemembered
       }));
     }

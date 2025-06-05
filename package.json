@@ -16,6 +16,8 @@
   "dependencies": {
     "@douyinfe/semi-ui": "^2.78.0",
     "@reduxjs/toolkit": "^2.8.2",
+    "@sentry/nextjs": "^9.24.0",
+    "@sentry/webpack-plugin": "^3.5.0",
     "@types/react": "^18.3.22",
     "@types/react-dom": "^18.3.7",
     "ahooks": "^3.8.4",

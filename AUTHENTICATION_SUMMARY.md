@@ -386,13 +386,11 @@ export const store = configureStore({
 ### 常见问题
 
 1. **Token过期问题**
-
    - 检查系统时间
    - 验证Token有效期设置
    - 确认刷新机制正常
 
 2. **登录失败**
-
    - 检查API接口状态
    - 验证用户凭据
    - 查看网络连接

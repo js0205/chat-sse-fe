@@ -4,7 +4,7 @@ import { RootState } from '@/store';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { loginUser } from '@/store/slices/authSlice';
 import { Button, Form, Modal, Toast } from '@douyinfe/semi-ui';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 interface FormApi {
   reset: () => void;
   validate: () => Promise<Record<string, unknown>>;
@@ -87,7 +87,7 @@ export const LoginModal = () => {
    * @param field 字段名
    * @param value 字段值
    */
-  const updateSingleField = (field: keyof LoginFormData, value: unknown) => {
+  const updateSingleField = useCallback((field: keyof LoginFormData, value: unknown) => {
     if (formRef.current) {
       const currentValues = formRef.current.getValues();
       formRef.current.setValues({
@@ -95,15 +95,15 @@ export const LoginModal = () => {
         [field]: value
       });
     }
-  };
+  }, []);
 
   // 获取验证码
-  const changeCaptcha = async () => {
+  const changeCaptcha = useCallback(async () => {
     const res = await getCaptcha();
     setCaptchaBase64(res.captchaBase64);
     updateSingleField('captchaKey' as keyof LoginFormData, res.captchaKey);
     setInitialValues((prev) => ({ ...prev, captchaKey: res.captchaKey }));
-  };
+  }, [updateSingleField]);
 
   // 表单验证规则
   const rules = {
@@ -133,7 +133,7 @@ export const LoginModal = () => {
         rememberMe: isRemembered
       }));
     }
-  }, []);
+  }, [changeCaptcha]);
   return (
     <>
       {accessToken ? <Button onClick={showDialog}>登录</Button> : <Button onClick={logout}>退出登录</Button>}

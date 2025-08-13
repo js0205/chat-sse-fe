@@ -2,18 +2,16 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@douyinfe/semi-ui', '@douyinfe/semi-icons', '@douyinfe/semi-illustrations'],
-<<<<<<< HEAD
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false
-  }
-  // instrumentationHook is no longer needed in Next.js 15+
-=======
+  },
+  // i18n configuration
   i18n: {
     locales: ['en', 'zh'],
     defaultLocale: 'en'
   }
->>>>>>> origin/i18n
+  // instrumentationHook is no longer needed in Next.js 15+
 };
 
 export default nextConfig;

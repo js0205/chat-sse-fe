@@ -5,13 +5,10 @@ const nextConfig: NextConfig = {
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false
-  },
-  // i18n configuration
-  i18n: {
-    locales: ['en', 'zh'],
-    defaultLocale: 'en'
   }
   // instrumentationHook is no longer needed in Next.js 15+
+  // Note: i18n configuration is not supported in App Router
+  // Use next-intl or similar library for internationalization
 };
 
 export default nextConfig;

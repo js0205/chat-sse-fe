@@ -15,11 +15,6 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "functions": {
-    "src/app/**/*.ts": {
-      "maxDuration": 30
-    }
-  },
   "regions": ["hkg1"],
   "github": {
     "silent": true

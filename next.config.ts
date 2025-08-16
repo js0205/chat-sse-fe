@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:8121/:path*'
+      }
+    ];
   }
   // instrumentationHook is no longer needed in Next.js 15+
   // Note: i18n configuration is not supported in App Router

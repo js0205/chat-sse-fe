@@ -4,5 +4,19 @@
   "Chat Page": "Chat Page",
   "This is the content of a basic modal.": "This is the content of a basic modal.",
   "More content...": "More content…",
-  "choose model": "choose model"
+  "choose model": "Choose Model",
+  "Choose Model": "Choose Model",
+  "Chat": "Chat",
+  "Model": "Model",
+  "Settings": "Settings",
+  "Profile": "Profile",
+  "Logout": "Logout",
+  "Send": "Send",
+  "Clear": "Clear",
+  "Loading...": "Loading...",
+  "Error": "Error",
+  "Success": "Success",
+  "Cancel": "Cancel",
+  "OK": "OK",
+  "Close": "Close"
 }

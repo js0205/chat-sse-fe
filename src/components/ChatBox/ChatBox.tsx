@@ -1,6 +1,6 @@
 'use client';
 import { deepseekMessage } from '@/apis';
-import { Button, TextArea } from '@douyinfe/semi-ui';
+import { Button } from '@douyinfe/semi-ui';
 import { useEffect, useRef, useState } from 'react';
 
 interface Message {
@@ -106,11 +106,20 @@ export const ChatBox = () => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputValue(e.target.value);
+
+    // 自动调整高度
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
   };
 
   // 在组件挂载前显示加载状态，避免 hydration 错误
@@ -199,15 +208,20 @@ export const ChatBox = () => {
       <div className='h-[120px] p-4 bg-white flex flex-col gap-2'>
         <div className='flex gap-3 items-end'>
           <div className='flex-1'>
-            <TextArea
+            <textarea
               value={inputValue}
-              onChange={(value) => setInputValue(value)}
+              onChange={handleTextareaChange}
               onKeyPress={handleKeyPress}
               placeholder='输入消息... (Enter发送，Shift+Enter换行)'
-              className='border border-gray-300 rounded-lg resize-none px-3 py-2'
+              className='w-full border border-gray-300 rounded-lg resize-none px-3 py-2 min-h-[40px] max-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
               disabled={isLoading}
-              autosize={{ minRows: 1, maxRows: 3 }}
               maxLength={1000}
+              rows={1}
+              style={{
+                minHeight: '40px',
+                maxHeight: '120px',
+                overflowY: 'auto'
+              }}
             />
           </div>
 

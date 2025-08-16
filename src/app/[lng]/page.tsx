@@ -1,8 +1,13 @@
-'use client';
+import { HomeClient } from './HomeClient';
 
-import { useTranslation } from 'react-i18next';
+interface HomeProps {
+  params: Promise<{
+    lng: string;
+  }>;
+}
 
-export default function Home() {
-  const { t } = useTranslation();
-  return <h1>{t('welcome')}</h1>;
+export default async function Home({ params }: HomeProps) {
+  const { lng } = await params;
+
+  return <HomeClient lng={lng} />;
 }
